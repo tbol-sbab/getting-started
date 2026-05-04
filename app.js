@@ -3,9 +3,62 @@ const LAST_CITY_KEY = "weather.lastCity";
 const GEO_PROMPTED_KEY = "weather.geoPrompted";
 const LANG_KEY = "weather.lang";
 
+const WEATHER_DESCRIPTION_TRANSLATIONS = {
+  sunny: "Soligt",
+  clear: "Klart",
+  "partly cloudy": "Växlande molnighet",
+  cloudy: "Molnigt",
+  overcast: "Mulet",
+  mist: "Disigt",
+  fog: "Dimma",
+  "freezing fog": "Underkyld dimma",
+  "patchy rain nearby": "Lokala regnskurar i närheten",
+  "patchy snow nearby": "Lokala snöbyar i närheten",
+  "patchy sleet nearby": "Lokala snöblandade skurar i närheten",
+  "patchy freezing drizzle nearby": "Lokalt underkylt duggregn i närheten",
+  "thundery outbreaks nearby": "Åska i närheten",
+  "blowing snow": "Snödrev",
+  blizzard: "Snöstorm",
+  "patchy light drizzle": "Lokalt lätt duggregn",
+  "light drizzle": "Lätt duggregn",
+  "freezing drizzle": "Underkylt duggregn",
+  "heavy freezing drizzle": "Kraftigt underkylt duggregn",
+  "patchy light rain": "Lokalt lätt regn",
+  "light rain": "Lätt regn",
+  "moderate rain at times": "Tidvis måttligt regn",
+  "moderate rain": "Måttligt regn",
+  "heavy rain at times": "Tidvis kraftigt regn",
+  "heavy rain": "Kraftigt regn",
+  "light freezing rain": "Lätt underkylt regn",
+  "moderate or heavy freezing rain": "Måttligt eller kraftigt underkylt regn",
+  "light sleet": "Lätt snöblandat regn",
+  "moderate or heavy sleet": "Måttligt eller kraftigt snöblandat regn",
+  "patchy light snow": "Lokalt lätt snöfall",
+  "light snow": "Lätt snöfall",
+  "patchy moderate snow": "Lokalt måttligt snöfall",
+  "moderate snow": "Måttligt snöfall",
+  "patchy heavy snow": "Lokalt kraftigt snöfall",
+  "heavy snow": "Kraftigt snöfall",
+  "ice pellets": "Iskorn",
+  "light rain shower": "Lätt regnskur",
+  "moderate or heavy rain shower": "Måttlig eller kraftig regnskur",
+  "torrential rain shower": "Skyfall",
+  "light sleet showers": "Lätta snöblandade skurar",
+  "moderate or heavy sleet showers": "Måttliga eller kraftiga snöblandade skurar",
+  "light snow showers": "Lätta snöbyar",
+  "moderate or heavy snow showers": "Måttliga eller kraftiga snöbyar",
+  "light showers of ice pellets": "Lätta skurar av iskorn",
+  "moderate or heavy showers of ice pellets": "Måttliga eller kraftiga skurar av iskorn",
+  "patchy light rain with thunder": "Lokalt lätt regn med åska",
+  "moderate or heavy rain with thunder": "Måttligt eller kraftigt regn med åska",
+  "patchy light snow with thunder": "Lokalt lätt snöfall med åska",
+  "moderate or heavy snow with thunder": "Måttligt eller kraftigt snöfall med åska",
+};
+
 const TRANSLATIONS = {
   sv: {
     title: "Väder Nu",
+    panelLabel: "Väderpanel",
     kicker: "Liveläge",
     appTitle: "Väder Nu",
     subtitle: "Ange en stad för att se aktuellt väder och ikon.",
@@ -30,12 +83,19 @@ const TRANSLATIONS = {
     humidity: "Luftfuktighet",
     wind: "Vind",
     forecastTitle: "3-dagarsprognos",
+    forecastAriaLabel: "3-dagarsprognos",
     forecastHigh: "H",
     forecastLow: "L",
     forecastDay: "Dag",
+    emptyCity: "Ange en stad.",
+    unknownCity: "Okänd stad",
+    unknownDescription: "Okänt väder",
+    iconAlt: "{description} ikon",
+    noIconAlt: "Ingen ikon tillgänglig",
   },
   en: {
     title: "City Weather Now",
+    panelLabel: "Weather lookup panel",
     kicker: "Live Conditions",
     appTitle: "City Weather Now",
     subtitle: "Type a city to view current weather and icon.",
@@ -60,13 +120,20 @@ const TRANSLATIONS = {
     humidity: "Humidity",
     wind: "Wind",
     forecastTitle: "3-Day Forecast",
+    forecastAriaLabel: "3-day forecast",
     forecastHigh: "H",
     forecastLow: "L",
     forecastDay: "Day",
+    emptyCity: "Please enter a city name.",
+    unknownCity: "Unknown city",
+    unknownDescription: "Unknown weather",
+    iconAlt: "{description} icon",
+    noIconAlt: "No icon available",
   },
 };
 
 let currentLang = localStorage.getItem(LANG_KEY) || "sv";
+let lastWeatherData = null;
 
 function t(key, vars = {}) {
   let str = TRANSLATIONS[currentLang]?.[key] ?? TRANSLATIONS.en[key] ?? key;
@@ -87,6 +154,10 @@ function applyLang() {
 
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+
+  document.querySelectorAll("[data-i18n-aria-label]").forEach((el) => {
+    el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
   });
 
   document.querySelectorAll(".lang-btn").forEach((btn) => {
@@ -136,6 +207,18 @@ function getIconUrl(iconUrl) {
   return iconUrl.replace("http://", "https://");
 }
 
+function localizeWeatherDescription(description) {
+  if (!description) {
+    return t("unknownDescription");
+  }
+
+  if (currentLang !== "sv") {
+    return description;
+  }
+
+  return WEATHER_DESCRIPTION_TRANSLATIONS[description.trim().toLowerCase()] ?? description;
+}
+
 function formatForecastDay(day, index) {
   const date = new Date(`${day.date}T12:00:00`);
   const dayLabel = Number.isNaN(date.getTime())
@@ -143,7 +226,9 @@ function formatForecastDay(day, index) {
     : date.toLocaleDateString(currentLang === "sv" ? "sv-SE" : "en-GB", { weekday: "short" });
 
   const hourly = Array.isArray(day.hourly) && day.hourly.length > 0 ? day.hourly[0] : {};
-  const description = hourly.weatherDesc?.[0]?.value ?? "Unknown";
+  const description = localizeWeatherDescription(
+    hourly.weatherDesc?.[0]?.value ?? t("unknownDescription")
+  );
 
   return {
     dayLabel,
@@ -157,7 +242,7 @@ function formatForecastDay(day, index) {
 function formatWeather(data) {
   const current = data.current_condition?.[0] ?? {};
   const area = data.nearest_area?.[0] ?? {};
-  const areaName = area.areaName?.[0]?.value ?? "Unknown city";
+  const areaName = area.areaName?.[0]?.value ?? t("unknownCity");
   const country = area.country?.[0]?.value ?? "";
   const cityLabel = country ? `${areaName}, ${country}` : areaName;
   const windKmph = Number(current.windspeedKmph ?? 0);
@@ -167,7 +252,7 @@ function formatWeather(data) {
 
   return {
     city: cityLabel,
-    description: current.weatherDesc?.[0]?.value ?? "Unknown",
+    description: localizeWeatherDescription(current.weatherDesc?.[0]?.value ?? t("unknownDescription")),
     iconUrl: current.weatherIconUrl?.[0]?.value ?? "",
     temp: `${Math.round(Number(current.temp_C ?? 0))} C`,
     feelsLike: `${Math.round(Number(current.FeelsLikeC ?? 0))} C`,
@@ -193,7 +278,7 @@ function renderForecast(forecastDays) {
     title.textContent = day.dayLabel;
 
     const icon = document.createElement("img");
-    icon.alt = `${day.description} icon`;
+    icon.alt = t("iconAlt", { description: day.description });
     if (day.iconUrl) {
       icon.src = day.iconUrl;
     }
@@ -224,11 +309,11 @@ function renderWeather(weather) {
   const iconUrl = getIconUrl(weather.iconUrl);
   if (iconUrl) {
     iconEl.src = iconUrl;
-    iconEl.alt = `${weather.description} icon`;
+    iconEl.alt = t("iconAlt", { description: weather.description });
     iconEl.classList.remove("hidden");
   } else {
     iconEl.removeAttribute("src");
-    iconEl.alt = "No icon available";
+    iconEl.alt = t("noIconAlt");
     iconEl.classList.add("hidden");
   }
 
@@ -286,6 +371,7 @@ async function lookupWeather(query, options = {}) {
 
   try {
     const raw = await fetchWeather(query);
+    lastWeatherData = raw;
     const weather = formatWeather(raw);
     renderWeather(weather);
 
@@ -344,7 +430,7 @@ async function onSubmit(event) {
 
   const city = cityInput.value.trim();
   if (!city) {
-    setStatus("Please enter a city name.", "warn");
+    setStatus(t("emptyCity"), "warn");
     hideCard();
     return;
   }
@@ -360,6 +446,9 @@ function init() {
       currentLang = btn.dataset.lang;
       localStorage.setItem(LANG_KEY, currentLang);
       applyLang();
+      if (lastWeatherData) {
+        renderWeather(formatWeather(lastWeatherData));
+      }
       const lastCity = localStorage.getItem(LAST_CITY_KEY);
       if (lastCity && !cardEl.classList.contains("hidden")) {
         setStatus(t("statusUpdated", { city: cityInput.value || lastCity }), "ok");
@@ -368,6 +457,13 @@ function init() {
       }
     });
   });
+
+  function updateCityInputValidity() {
+    cityInput.setCustomValidity(cityInput.value.trim() ? "" : t("emptyCity"));
+  }
+
+  cityInput.addEventListener("input", updateCityInputValidity);
+  cityInput.addEventListener("invalid", updateCityInputValidity);
 
   form.addEventListener("submit", onSubmit);
 
