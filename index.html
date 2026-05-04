@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="sv">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>City Weather Now</title>
+    <title data-i18n="title">Väder Nu</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -15,27 +15,32 @@
   <body>
     <main class="app-shell">
       <section class="panel" aria-label="Weather lookup panel">
+        <div class="lang-switcher" role="group" aria-label="Välj språk">
+          <button class="lang-btn active" id="btn-sv" lang="sv" aria-pressed="true" title="Svenska" data-lang="sv">🇸🇪</button>
+          <button class="lang-btn" id="btn-en" lang="en" aria-pressed="false" title="English" data-lang="en">🇬🇧</button>
+        </div>
         <header class="hero">
-          <p class="kicker">Live Conditions</p>
-          <h1>City Weather Now</h1>
-          <p class="subtitle">Type a city to view current weather and icon.</p>
+          <p class="kicker" data-i18n="kicker">Liveläge</p>
+          <h1 data-i18n="appTitle">Väder Nu</h1>
+          <p class="subtitle" data-i18n="subtitle">Ange en stad för att se aktuellt väder och ikon.</p>
         </header>
 
         <form id="weather-form" class="search" autocomplete="off">
-          <label for="city-input">City</label>
+          <label for="city-input" data-i18n="cityLabel">Stad</label>
           <div class="search-row">
             <input
               id="city-input"
               name="city"
               type="text"
-              placeholder="e.g. Stockholm"
+              data-i18n-placeholder="cityPlaceholder"
+              placeholder="t.ex. Stockholm"
               required
             />
-            <button id="search-btn" type="submit">Get Weather</button>
+            <button id="search-btn" type="submit" data-i18n="searchBtn">Hämta väder</button>
           </div>
         </form>
 
-        <p id="status" class="status" aria-live="polite">Enter a city to begin.</p>
+        <p id="status" class="status" aria-live="polite" data-i18n="statusInit">Ange en stad för att börja.</p>
 
         <article id="weather-card" class="weather-card hidden" aria-live="polite">
           <div class="weather-main">
@@ -46,13 +51,13 @@
             </div>
           </div>
           <div class="metrics">
-            <p><span>Temperature</span><strong id="temp"></strong></p>
-            <p><span>Feels like</span><strong id="feels-like"></strong></p>
-            <p><span>Humidity</span><strong id="humidity"></strong></p>
-            <p><span>Wind</span><strong id="wind"></strong></p>
+            <p><span data-i18n="temperature">Temperatur</span><strong id="temp"></strong></p>
+            <p><span data-i18n="feelsLike">Känns som</span><strong id="feels-like"></strong></p>
+            <p><span data-i18n="humidity">Luftfuktighet</span><strong id="humidity"></strong></p>
+            <p><span data-i18n="wind">Vind</span><strong id="wind"></strong></p>
           </div>
           <section id="forecast" class="forecast hidden" aria-label="3-day forecast">
-            <h3>3-Day Forecast</h3>
+            <h3 data-i18n="forecastTitle">3-dagarsprognos</h3>
             <div id="forecast-list" class="forecast-list"></div>
           </section>
         </article>

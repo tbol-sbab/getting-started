@@ -1,6 +1,100 @@
 const API_URL = "https://wttr.in";
 const LAST_CITY_KEY = "weather.lastCity";
 const GEO_PROMPTED_KEY = "weather.geoPrompted";
+const LANG_KEY = "weather.lang";
+
+const TRANSLATIONS = {
+  sv: {
+    title: "Väder Nu",
+    kicker: "Liveläge",
+    appTitle: "Väder Nu",
+    subtitle: "Ange en stad för att se aktuellt väder och ikon.",
+    cityLabel: "Stad",
+    cityPlaceholder: "t.ex. Stockholm",
+    searchBtn: "Hämta väder",
+    searchBtnLoading: "Laddar...",
+    statusInit: "Ange en stad för att börja.",
+    statusLastCity: "Tryck på Hämta väder för att uppdatera {city}.",
+    statusLooking: "Söker väder för {city}...",
+    statusLocation: "Hämtar väder för din plats...",
+    statusAllowLocation: "Tillåt platsdelning för att automatiskt hämta väder.",
+    statusUpdated: "Väder uppdaterat för {city}.",
+    statusUpdatedLocation: "Väder uppdaterat för {city} via din plats.",
+    statusNotFound: "Staden hittades inte. Försök med en större stad eller kontrollera stavningen.",
+    statusLocationDenied: "Platsdelning nekades. Sök efter stad istället.",
+    statusLocationFail: "Kunde inte hämta din plats. Sök efter stad istället.",
+    statusLocationError: "Kunde inte hämta väder för din plats. Sök efter stad istället.",
+    statusNetworkError: "Kunde inte hämta väderdata. Kontrollera din anslutning och försök igen.",
+    temperature: "Temperatur",
+    feelsLike: "Känns som",
+    humidity: "Luftfuktighet",
+    wind: "Vind",
+    forecastTitle: "3-dagarsprognos",
+    forecastHigh: "H",
+    forecastLow: "L",
+    forecastDay: "Dag",
+  },
+  en: {
+    title: "City Weather Now",
+    kicker: "Live Conditions",
+    appTitle: "City Weather Now",
+    subtitle: "Type a city to view current weather and icon.",
+    cityLabel: "City",
+    cityPlaceholder: "e.g. Stockholm",
+    searchBtn: "Get Weather",
+    searchBtnLoading: "Loading...",
+    statusInit: "Enter a city to begin.",
+    statusLastCity: "Press Get Weather to refresh {city}.",
+    statusLooking: "Looking up weather for {city}...",
+    statusLocation: "Checking weather for your location...",
+    statusAllowLocation: "Allow location access to fetch weather automatically.",
+    statusUpdated: "Updated weather for {city}.",
+    statusUpdatedLocation: "Updated weather for {city} from your location.",
+    statusNotFound: "City not found. Try a larger city or include proper spelling.",
+    statusLocationDenied: "Location access denied. Search by city instead.",
+    statusLocationFail: "Could not access your location. Search by city instead.",
+    statusLocationError: "Could not load weather for your location. Search by city instead.",
+    statusNetworkError: "Could not load weather data. Check your connection and try again.",
+    temperature: "Temperature",
+    feelsLike: "Feels like",
+    humidity: "Humidity",
+    wind: "Wind",
+    forecastTitle: "3-Day Forecast",
+    forecastHigh: "H",
+    forecastLow: "L",
+    forecastDay: "Day",
+  },
+};
+
+let currentLang = localStorage.getItem(LANG_KEY) || "sv";
+
+function t(key, vars = {}) {
+  let str = TRANSLATIONS[currentLang]?.[key] ?? TRANSLATIONS.en[key] ?? key;
+  for (const [k, v] of Object.entries(vars)) {
+    str = str.replace(`{${k}}`, v);
+  }
+  return str;
+}
+
+function applyLang() {
+  document.documentElement.lang = currentLang;
+  document.title = t("title");
+
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.dataset.i18n;
+    el.textContent = t(key);
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    const active = btn.dataset.lang === currentLang;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-pressed", String(active));
+  });
+}
 
 const form = document.getElementById("weather-form");
 const cityInput = document.getElementById("city-input");
@@ -24,7 +118,7 @@ function setStatus(message, tone = "") {
 
 function setLoading(isLoading) {
   searchBtn.disabled = isLoading;
-  searchBtn.textContent = isLoading ? "Loading..." : "Get Weather";
+  searchBtn.textContent = isLoading ? t("searchBtnLoading") : t("searchBtn");
 }
 
 function hideCard() {
@@ -45,8 +139,8 @@ function getIconUrl(iconUrl) {
 function formatForecastDay(day, index) {
   const date = new Date(`${day.date}T12:00:00`);
   const dayLabel = Number.isNaN(date.getTime())
-    ? `Day ${index + 1}`
-    : date.toLocaleDateString("en-GB", { weekday: "short" });
+    ? `${t("forecastDay")} ${index + 1}`
+    : date.toLocaleDateString(currentLang === "sv" ? "sv-SE" : "en-GB", { weekday: "short" });
 
   const hourly = Array.isArray(day.hourly) && day.hourly.length > 0 ? day.hourly[0] : {};
   const description = hourly.weatherDesc?.[0]?.value ?? "Unknown";
@@ -110,7 +204,7 @@ function renderForecast(forecastDays) {
 
     const temp = document.createElement("p");
     temp.className = "forecast-temp";
-    temp.textContent = `H ${day.high} / L ${day.low}`;
+    temp.textContent = `${t("forecastHigh")} ${day.high} / ${t("forecastLow")} ${day.low}`;
 
     item.append(title, icon, desc, temp);
     forecastListEl.appendChild(item);
@@ -140,7 +234,7 @@ function renderWeather(weather) {
 
   renderForecast(weather.forecast);
   showCard();
-  setStatus(`Updated weather for ${weather.city}.`, "ok");
+  setStatus(t("statusUpdated", { city: weather.city }), "ok");
 }
 
 async function fetchWeather(query) {
@@ -172,23 +266,23 @@ function handleLookupError(error, lookupType = "city") {
   hideCard();
 
   if (error.message === "not_found") {
-    setStatus("City not found. Try a larger city or include proper spelling.", "warn");
+    setStatus(t("statusNotFound"), "warn");
     return;
   }
 
   if (lookupType === "location") {
-    setStatus("Could not load weather for your location. Search by city instead.", "error");
+    setStatus(t("statusLocationError"), "error");
     return;
   }
 
-  setStatus("Could not load weather data. Check your connection and try again.", "error");
+  setStatus(t("statusNetworkError"), "error");
 }
 
 async function lookupWeather(query, options = {}) {
   const { saveSearch = true, lookupType = "city", sourceStatus = "" } = options;
 
   setLoading(true);
-  setStatus(lookupType === "location" ? "Checking weather for your location..." : `Looking up weather for ${query}...`);
+  setStatus(lookupType === "location" ? t("statusLocation") : t("statusLooking", { city: query }));
 
   try {
     const raw = await fetchWeather(query);
@@ -202,7 +296,7 @@ async function lookupWeather(query, options = {}) {
     setCityInputFromLabel(weather.city);
 
     if (sourceStatus) {
-      setStatus(sourceStatus.replace("{city}", weather.city), "ok");
+      setStatus(t(sourceStatus, { city: weather.city }), "ok");
     }
 
     return true;
@@ -219,7 +313,7 @@ function requestLocationWeather() {
     return;
   }
 
-  setStatus("Allow location access to fetch weather automatically.");
+  setStatus(t("statusAllowLocation"));
 
   navigator.geolocation.getCurrentPosition(
     ({ coords }) => {
@@ -227,15 +321,15 @@ function requestLocationWeather() {
       void lookupWeather(locationQuery, {
         saveSearch: false,
         lookupType: "location",
-        sourceStatus: "Updated weather for {city} from your location.",
+        sourceStatus: "statusUpdatedLocation",
       });
     },
     (error) => {
       if (error.code === error.PERMISSION_DENIED) {
-        setStatus("Location access denied. Search by city instead.", "warn");
+        setStatus(t("statusLocationDenied"), "warn");
         return;
       }
-      setStatus("Could not access your location. Search by city instead.", "warn");
+      setStatus(t("statusLocationFail"), "warn");
     },
     {
       enableHighAccuracy: false,
@@ -259,12 +353,28 @@ async function onSubmit(event) {
 }
 
 function init() {
+  applyLang();
+
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentLang = btn.dataset.lang;
+      localStorage.setItem(LANG_KEY, currentLang);
+      applyLang();
+      const lastCity = localStorage.getItem(LAST_CITY_KEY);
+      if (lastCity && !cardEl.classList.contains("hidden")) {
+        setStatus(t("statusUpdated", { city: cityInput.value || lastCity }), "ok");
+      } else if (!lastCity) {
+        setStatus(t("statusInit"));
+      }
+    });
+  });
+
   form.addEventListener("submit", onSubmit);
 
   const lastCity = localStorage.getItem(LAST_CITY_KEY);
   if (lastCity) {
     cityInput.value = lastCity;
-    setStatus(`Press Get Weather to refresh ${lastCity}.`);
+    setStatus(t("statusLastCity", { city: lastCity }));
   }
 
   const locationPrompted = localStorage.getItem(GEO_PROMPTED_KEY) === "1";
