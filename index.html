@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>City Weather Now</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="panel" aria-label="Weather lookup panel">
+        <header class="hero">
+          <p class="kicker">Live Conditions</p>
+          <h1>City Weather Now</h1>
+          <p class="subtitle">Type a city to view current weather and icon.</p>
+        </header>
+
+        <form id="weather-form" class="search" autocomplete="off">
+          <label for="city-input">City</label>
+          <div class="search-row">
+            <input
+              id="city-input"
+              name="city"
+              type="text"
+              placeholder="e.g. Stockholm"
+              required
+            />
+            <button id="search-btn" type="submit">Get Weather</button>
+          </div>
+        </form>
+
+        <p id="status" class="status" aria-live="polite">Enter a city to begin.</p>
+
+        <article id="weather-card" class="weather-card hidden" aria-live="polite">
+          <div class="weather-main">
+            <img id="weather-icon" alt="Weather icon" width="96" height="96" />
+            <div>
+              <h2 id="city-name"></h2>
+              <p id="weather-desc" class="desc"></p>
+            </div>
+          </div>
+          <div class="metrics">
+            <p><span>Temperature</span><strong id="temp"></strong></p>
+            <p><span>Feels like</span><strong id="feels-like"></strong></p>
+            <p><span>Humidity</span><strong id="humidity"></strong></p>
+            <p><span>Wind</span><strong id="wind"></strong></p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
