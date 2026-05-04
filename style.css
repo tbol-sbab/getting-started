@@ -180,6 +180,52 @@ body {
   opacity: 0.8;
 }
 
+.forecast {
+  margin-top: 1rem;
+}
+
+.forecast h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+}
+
+.forecast-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.forecast-item {
+  border-radius: 12px;
+  background: #f7f8fa;
+  border: 1px solid #ecf0f3;
+  padding: 0.6rem;
+  text-align: center;
+}
+
+.forecast-item h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.forecast-item img {
+  width: 56px;
+  height: 56px;
+}
+
+.forecast-desc {
+  margin: 0.1rem 0 0.35rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  text-transform: capitalize;
+}
+
+.forecast-temp {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .hidden {
   display: none;
 }
@@ -225,6 +271,10 @@ body {
   }
 
   .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast-list {
     grid-template-columns: 1fr;
   }
 }
